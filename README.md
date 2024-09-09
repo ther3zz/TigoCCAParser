@@ -6,7 +6,7 @@ I'm currently running this script via docker (using a debian bookworm image)
 
 Usage:
 ```
-python3 tigo.py --mqtt-broker "192.168.1.100" --mqtt-port 1884 --mqtt-user "myuser" --mqtt-pass "mypassword" --tigo-router "10.11.1.212" --poll-interval 15 -debug
+python3 tigo.py --mqtt-broker "192.168.1.100" --mqtt-port 1884 --mqtt-user "myuser" --mqtt-pass "mypassword" --tigo-router "10.11.1.212" --poll-interval 5 -debug
 ```
 
 
