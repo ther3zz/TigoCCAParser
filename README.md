@@ -20,6 +20,10 @@ python3 tigo.py --mqtt-broker "192.168.1.100" --mqtt-port 1884 --mqtt-user "myus
 
 --tigo-router: Tigo router IP address (default: 10.11.1.211)
 
+--device-name-prefix: Sets the prefix of the device name in Home Assistant (default: Tigo Optimizer)
+
+--device-model: Model name for the device in Home Assistant (default: TS4-A-O)
+
 --poll-interval: Time in seconds between each poll/publish cycle (default: 10 seconds)
 
 -debug: enables verbose logging in the commandline
