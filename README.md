@@ -1,3 +1,9 @@
+I took the idea from the following post and modified things to work with home assistant:
+[https://www.photovoltaikforum.com/](https://www.photovoltaikforum.com/thread/149592-details-protokolle-zugang-auf-tigo-cca/?postID=3929749#post3929749)
+
+
+I'm currently running this script via docker (using a debian bookworm image)
+
 Usage:
 ```
 python3 tigo.py --mqtt-broker "192.168.1.100" --mqtt-port 1884 --mqtt-user "myuser" --mqtt-pass "mypassword" --tigo-router "10.11.1.212" --poll-interval 15 -debug
