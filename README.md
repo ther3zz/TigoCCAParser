@@ -6,7 +6,7 @@ I'm currently running this script via docker (using a debian bookworm image)
 
 Usage:
 ```
-python3 tigo.py --mqtt-broker "192.168.1.100" --mqtt-port 1884 --mqtt-user "myuser" --mqtt-pass "mypassword" --tigo-router "10.11.1.212" --device-name-prefix "Tigo Optimizer" --device-model "TS4-A-O" --poll-interval 5 -debug
+python3 tigo.py --mqtt-broker "192.168.1.100" --mqtt-port 1884 --mqtt-user "myuser" --mqtt-pass "mypassword" --tigo-router "10.11.1.212" --device-name-prefix "Tigo Optimizer" --device-model "TS4-A-O" --topic-base "custom/topic/base" --poll-interval 5 -debug
 ```
 
 
@@ -17,6 +17,8 @@ python3 tigo.py --mqtt-broker "192.168.1.100" --mqtt-port 1884 --mqtt-user "myus
 --mqtt-user: MQTT username (default: '')
 
 --mqtt-pass: MQTT password (default: '')
+
+--topic-base: Sets the base mqtt topic. (default: homeassistant/sensor/energy/tigo)
 
 --tigo-router: Tigo router IP address (default: 10.11.1.211)
 
