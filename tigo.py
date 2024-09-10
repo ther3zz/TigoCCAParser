@@ -5,20 +5,20 @@ import requests
 import time
 import sys
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import paho.mqtt.client as mqtt
 
 # Set up argument parser
-parser = argparse.ArgumentParser(description="Tigo Solar Panel Data Publisher")
-parser.add_argument('--device-name-prefix', default='Tigo Solar Panel', help='Prefix for device name in Home Assistant')
-parser.add_argument('--device-model', default='Solar Panel', help='Model name for the device in Home Assistant')
+parser = argparse.ArgumentParser(description="Tigo CCA Data Publisher")
+parser.add_argument('--device-name-prefix', default='Tigo Optimizer', help='Prefix for device name in Home Assistant')
+parser.add_argument('--device-model', default='TS4-A-O', help='Model name for the device in Home Assistant')
 parser.add_argument('--mqtt-broker', default='192.168.1.250', help='MQTT broker address')
 parser.add_argument('--mqtt-port', type=int, default=1883, help='MQTT broker port')
 parser.add_argument('--mqtt-user', default='', help='MQTT username')
 parser.add_argument('--mqtt-pass', default='', help='MQTT password')
 parser.add_argument('--tigo-router', default='10.11.1.211', help='Tigo router IP address')
-parser.add_argument('--poll-interval', type=int, default=10, help='Time in seconds between each poll/publish cycle')
+parser.add_argument('--poll-interval', type=int, default=5, help='Time in seconds between each poll/publish cycle')
 parser.add_argument('--topic-base', default='homeassistant/sensor/energy/tigo', help='Base MQTT topic for Home Assistant')
 parser.add_argument('-debug', action='store_true', help='Enable debug mode')  # Add debug flag
 args = parser.parse_args()
@@ -181,13 +181,23 @@ def publish_mqtt(d_):
                     print("MQTT client is not connected. Skipping publish.")
                 return
 
+# Schedule based on fixed intervals to avoid time drift
+next_poll_time = datetime.now()
+
 while True:
-    if debug:
-        print('Triggering data poll and publish...')
-    d_ = poll_tigo()
-    if d_:
-        publish_mqtt(d_)
-    else:
+    current_time = datetime.now()
+    if current_time >= next_poll_time:
         if debug:
-            print("No data to publish.")
-    time.sleep(poll_interval)
+            print('Triggering data poll and publish...')
+        d_ = poll_tigo()
+        if d_:
+            publish_mqtt(d_)
+        else:
+            if debug:
+                print("No data to publish.")
+        
+        # Schedule the next poll time
+        next_poll_time = datetime.now() + timedelta(seconds=poll_interval)
+    
+    # Sleep briefly to prevent busy waiting
+    time.sleep(0.1)
