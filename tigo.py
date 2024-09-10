@@ -10,15 +10,16 @@ from bs4 import BeautifulSoup
 import paho.mqtt.client as mqtt
 
 # Set up argument parser
-parser = argparse.ArgumentParser(description="Tigo CCA Data Publisher")
-parser.add_argument('--device-name-prefix', default='Tigo Optimizer', help='Prefix for device name in Home Assistant')
-parser.add_argument('--device-model', default='TS4-A-O', help='Model name for the device in Home Assistant')
+parser = argparse.ArgumentParser(description="Tigo Solar Panel Data Publisher")
+parser.add_argument('--device-name-prefix', default='Tigo Solar Panel', help='Prefix for device name in Home Assistant')
+parser.add_argument('--device-model', default='Solar Panel', help='Model name for the device in Home Assistant')
 parser.add_argument('--mqtt-broker', default='192.168.1.250', help='MQTT broker address')
 parser.add_argument('--mqtt-port', type=int, default=1883, help='MQTT broker port')
 parser.add_argument('--mqtt-user', default='', help='MQTT username')
 parser.add_argument('--mqtt-pass', default='', help='MQTT password')
 parser.add_argument('--tigo-router', default='10.11.1.211', help='Tigo router IP address')
 parser.add_argument('--poll-interval', type=int, default=10, help='Time in seconds between each poll/publish cycle')
+parser.add_argument('--topic-base', default='homeassistant/sensor/energy/tigo', help='Base MQTT topic for Home Assistant')
 parser.add_argument('-debug', action='store_true', help='Enable debug mode')  # Add debug flag
 args = parser.parse_args()
 
@@ -29,9 +30,9 @@ mqtt_port = args.mqtt_port
 mqtt_user = args.mqtt_user
 mqtt_pass = args.mqtt_pass
 poll_interval = args.poll_interval
+topic_base = args.topic_base
 
 client_id = "tigo_energy_client"  # Unique client ID for MQTT connection
-topic_base = 'homeassistant/sensor/energy/tigo'  # Base topic for MQTT discovery
 
 url = 'http://' + tigo_router + '/cgi-bin/mmdstatus'
 session = requests.Session()
