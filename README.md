@@ -26,6 +26,6 @@ python3 tigo.py --mqtt-broker "192.168.1.100" --mqtt-port 1884 --mqtt-user "myus
 
 --device-model: Model name for the device in Home Assistant (default: TS4-A-O)
 
---poll-interval: Time in seconds between each poll/publish cycle (default: 10 seconds)
+--poll-interval: Time in seconds between each poll/publish cycle (default: 5 seconds)
 
 -debug: enables verbose logging in the commandline
