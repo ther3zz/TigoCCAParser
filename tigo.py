@@ -143,9 +143,7 @@ def poll_tigo():
                     for i in range(len(line)):
                         line[i] = line[i].replace('%', '')  
                         line[i] = line[i].replace('\xa0', '_')  
-                        line[i] = line[i].replace('on', '1')  
-                        line[i] = line[i].replace('off', '0')  
-                        line[i] = line[i].replace('/', '-')  
+                        line[i] = line[i].replace('/', '-')  # No longer replacing 'on' and 'off'
 
                         try:
                             if '.' in line[i]:
@@ -154,6 +152,10 @@ def poll_tigo():
                                 d_[bc][d_['headline'][i]] = int(line[i])
                         except Exception as e:
                             d_[bc][d_['headline'][i]] = line[i]
+
+                    # Ensure VMPE is correctly captured
+                    if len(line) >= 15:  # Check if we have enough columns for VMPE
+                        d_[bc]['VMPE'] = int(line[14]) if line[14].isdigit() else line[14]
 
             d_.pop('headline', None)
 
@@ -168,28 +170,41 @@ def poll_tigo():
         logger.error(f"Error polling Tigo: {e}")
         return None
 
+
+
 def publish_mqtt(d_):
     if not isinstance(d_, dict):
         logger.debug(f"Data is not in the expected format (dictionary). Actual type: {type(d_)}")
         return
 
     for panel_id, panel_data in d_.items():
-        sensor_id_base = f"energy_tigo_{panel_id.replace('___', '_')}"
+        sanitized_panel_id = panel_id.replace('___', '_').replace('-', '_')  # Ensure clean panel ID
+        device_name = f"{args.device_name_prefix} {panel_data['Label']}-{panel_data['Barcode']}"  # Create readable device name
+        
+        sensor_id_base = f"energy_tigo_{sanitized_panel_id}"
         device = {
             "identifiers": [sensor_id_base],
-            "name": f"{args.device_name_prefix} {panel_id}",
+            "name": device_name,
             "manufacturer": "Tigo",
             "model": args.device_model
         }
+        
         for metric, value in panel_data.items():
-            sensor_id = f"{sensor_id_base}_{metric}"
-            unique_id = sensor_id  
-            name = f"{args.device_name_prefix} {panel_id} {metric}"
-            state_topic = f"{topic_base}/{panel_id}/{metric}"
+            # Sensor ID for MQTT topic (removes special characters)
+            sanitized_metric = metric.replace('%', '').replace(' ', '_').replace('-', '_')
+            sensor_id = f"{sensor_id_base}_{sanitized_metric}"
+            unique_id = sensor_id  # Unique ID for Home Assistant
             
-            unit_of_measurement = ""
+            # Only the metric name in the entity name
+            name = metric
+
+            state_topic = f"{topic_base}/{sanitized_panel_id}/{sanitized_metric}"
+
+            # Default values
+            unit_of_measurement = None
             device_class = None
 
+            # Handle numeric and specific sensor data
             if "Power_W" in metric:
                 unit_of_measurement = "W"
                 device_class = "power"
@@ -202,20 +217,28 @@ def publish_mqtt(d_):
             elif "Temp_C" in metric:
                 unit_of_measurement = "°C"
                 device_class = "temperature"
-            elif "RSSI" in metric:
+            elif "RSSI" in metric or "BRSSI" in metric:
                 unit_of_measurement = "dBm"
                 device_class = "signal_strength"
-            elif "Bypass" in metric or "Event" in metric or "Raw" in metric:
-                device_class = "enum"  
-            
+            elif metric in ["Bypass", "Event", "Raw", "Extra_Raw", "Details_Raw", "Mode", "Sync/Evt"]:
+                device_class = "enum"
+            elif metric in ["Label", "Barcode", "MAC", "Slot"]:
+                # Fields like Label, Barcode, MAC, and Slot shouldn't have units or classes
+                unit_of_measurement = None
+                device_class = None
+            else:
+                logger.debug(f"No unit of measurement or device class for metric: {metric}")
+
+            # Handle non-numeric values
             if isinstance(value, str) and value == 'n-a':
                 logger.debug(f"Non-numeric value for {metric}: {value}. Replacing with None.")
-                value = None  
-
+                value = None  # Skip non-numeric values
+            
+            # Publish the discovery message for Home Assistant
             publish_discovery_message(
                 sensor_id=sensor_id,
                 unique_id=unique_id,
-                name=name,
+                name=name,  # Just the metric name
                 state_topic=state_topic,
                 unit_of_measurement=unit_of_measurement,
                 device_class=device_class if device_class else None,
@@ -224,6 +247,7 @@ def publish_mqtt(d_):
 
             logger.debug(f"Publishing to {state_topic}: {value}")
 
+            # Publish the actual data to the MQTT broker
             if mqttc.is_connected():
                 if value is not None:
                     msg_info = mqttc.publish(state_topic, value)
@@ -235,6 +259,9 @@ def publish_mqtt(d_):
             else:
                 logger.error("MQTT client is not connected. Skipping publish.")
                 return
+
+
+
 
 
 next_poll_time = datetime.now()
