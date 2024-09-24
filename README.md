@@ -4,28 +4,55 @@ I took the idea from the following post and modified things to work with home as
 
 I'm currently running this script via docker (using a debian bookworm image)
 
-Usage:
-```
-python3 tigo.py --mqtt-broker "192.168.1.100" --mqtt-port 1884 --mqtt-user "myuser" --mqtt-pass "mypassword" --tigo-router "10.11.1.212" --device-name-prefix "Tigo Optimizer" --device-model "TS4-A-O" --topic-base "custom/topic/base" --poll-interval 5 -debug
-```
+### Command-Line Arguments
 
+- `--mqtt-broker`:  
+  MQTT broker address  
+  **default**: `192.168.1.250`
 
---mqtt-broker: MQTT broker address (default: 192.168.1.250)
+- `--mqtt-port`:  
+  MQTT broker port  
+  **default**: `1883`
 
---mqtt-port: MQTT broker port (default: 1883)
+- `--mqtt-user`:  
+  MQTT username  
+  **default**: ``
 
---mqtt-user: MQTT username (default: '')
+- `--mqtt-pass`:  
+  MQTT password  
+  **default**: ``
 
---mqtt-pass: MQTT password (default: '')
+- `--topic-base`:  
+  Sets the base MQTT topic.  
+  **default**: `homeassistant/sensor/energy/tigo`
 
---topic-base: Sets the base mqtt topic. (default: homeassistant/sensor/energy/tigo)
+- `--tigo-router`:  
+  Tigo router IP address  
+  **default**: `10.11.1.211`
 
---tigo-router: Tigo router IP address (default: 10.11.1.211)
+- `--device-name-prefix`:  
+  Sets the prefix of the device name in Home Assistant  
+  **default**: `Tigo Optimizer`
 
---device-name-prefix: Sets the prefix of the device name in Home Assistant (default: Tigo Optimizer)
+- `--device-model`:  
+  Model name for the device in Home Assistant  
+  **default**: `TS4-A-O`
 
---device-model: Model name for the device in Home Assistant (default: TS4-A-O)
+- `--poll-interval`:  
+  Time in seconds between each poll/publish cycle  
+  **default**: `5 seconds`
 
---poll-interval: Time in seconds between each poll/publish cycle (default: 5 seconds)
+- `--timeout`:  
+  Timeout in seconds for requests to the Tigo router  
+  **default**: `10 seconds`
 
--debug: enables verbose logging in the commandline
+- `--log-file`:  
+  Path to the log file  
+  **default**: `None`
+
+- `-debug`:  
+  Enables verbose logging in the command line
+
+### Example usage:
+```bash
+python script.py --mqtt-broker 192.168.1.50 --mqtt-port 1884 --mqtt-user myuser --mqtt-pass mypassword --poll-interval 10 --timeout 20 --log-file /path/to/logfile -debug
