@@ -40,11 +40,11 @@ I'm currently running this script via docker (using a debian bookworm image)
 
 - `--poll-interval`:  
   Time in seconds between each poll/publish cycle  
-  **default**: `5 seconds`
+  **default**: `10 seconds`
 
 - `--timeout`:  
   Timeout in seconds for requests to the Tigo router  
-  **default**: `10 seconds`
+  **default**: `5 seconds`
 
 - `--log-file`:  
   Path to the log file  
