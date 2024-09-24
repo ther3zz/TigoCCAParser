@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+import re
 import argparse
 import requests
 import time
@@ -59,7 +59,10 @@ except Exception as e:
     sys.exit(1)
 
 def publish_discovery_message(sensor_id, unique_id, name, state_topic, unit_of_measurement, device_class, device):
-    discovery_topic = f"homeassistant/sensor/{sensor_id}/config"
+    # Sanitize sensor_id by replacing any characters that are not alphanumeric, hyphens, or underscores
+    sanitized_sensor_id = re.sub(r'[^a-zA-Z0-9-_]', '_', sensor_id)
+    discovery_topic = f"homeassistant/sensor/{sanitized_sensor_id}/config"
+    
     discovery_payload = {
         "name": name,
         "unique_id": unique_id,  # Add unique ID for each sensor
@@ -152,8 +155,34 @@ def publish_mqtt(d_):
             unique_id = sensor_id  # Ensure each sensor has a unique ID
             name = f"{args.device_name_prefix} {panel_id} {metric}"
             state_topic = f"{topic_base}/{panel_id}/{metric}"
-            unit_of_measurement = "W" if "Power_W" in metric else ("A" if "Current_A" in metric else ("V" if "Voltage" in metric else ""))
-            device_class = "power" if "Power_W" in metric else ("current" if "Current_A" in metric else ("voltage" if "Voltage" in metric else ""))
+            
+            # Determine unit of measurement and device class based on the metric
+            unit_of_measurement = ""
+            device_class = None
+
+            if "Power_W" in metric:
+                unit_of_measurement = "W"
+                device_class = "power"
+            elif "Current_A" in metric:
+                unit_of_measurement = "A"
+                device_class = "current"
+            elif "Voltage" in metric:
+                unit_of_measurement = "V"
+                device_class = "voltage"
+            elif "Temp_C" in metric:
+                unit_of_measurement = "°C"
+                device_class = "temperature"
+            elif "RSSI" in metric:
+                unit_of_measurement = "dBm"
+                device_class = "signal_strength"
+            elif "Bypass" in metric or "Event" in metric or "Raw" in metric:
+                device_class = "enum"  # Example assumption for enum type
+            
+            # Handle non-numeric values (e.g., 'n-a') before publishing
+            if isinstance(value, str) and value == 'n-a':
+                if debug:
+                    print(f"Non-numeric value for {metric}: {value}. Replacing with None.")
+                value = None  # Set to None for non-numeric values like 'n-a'
 
             # Publish discovery message for each metric of each panel
             publish_discovery_message(
@@ -162,7 +191,7 @@ def publish_mqtt(d_):
                 name=name,
                 state_topic=state_topic,
                 unit_of_measurement=unit_of_measurement,
-                device_class=device_class,
+                device_class=device_class if device_class else None,  # Ensure None if class is empty
                 device=device
             )
 
@@ -171,15 +200,22 @@ def publish_mqtt(d_):
                 print(f"Publishing to {state_topic}: {value}")
 
             if mqttc.is_connected():
-                msg_info = mqttc.publish(state_topic, value)
-                msg_info.wait_for_publish()
-                if msg_info.rc != mqtt.MQTT_ERR_SUCCESS:
+                # Ensure that None values are not sent, Home Assistant will treat them as unavailable
+                if value is not None:
+                    msg_info = mqttc.publish(state_topic, value)
+                    msg_info.wait_for_publish()
+                    if msg_info.rc != mqtt.MQTT_ERR_SUCCESS:
+                        if debug:
+                            print(f"Failed to publish to {state_topic}. Return code: {msg_info.rc}")
+                else:
                     if debug:
-                        print(f"Failed to publish to {state_topic}. Return code: {msg_info.rc}")
+                        print(f"Skipping publishing None value to {state_topic}.")
             else:
                 if debug:
                     print("MQTT client is not connected. Skipping publish.")
                 return
+
+
 
 # Schedule based on fixed intervals to avoid time drift
 next_poll_time = datetime.now()
