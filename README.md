@@ -1,4 +1,4 @@
-I took the idea from the following post and modified things to work with home assistant:
+Please read the following post as it covers some requirements of accessing the CCA webui. You basically need to access the CCA from a device with this IP: 10.11.1.1
 [https://www.photovoltaikforum.com/](https://www.photovoltaikforum.com/thread/149592-details-protokolle-zugang-auf-tigo-cca/?postID=3929749#post3929749)
 
 
